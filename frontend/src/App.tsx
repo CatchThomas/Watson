@@ -172,6 +172,7 @@ export default function App() {
   const [hosts, setHosts] = useState<Host[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [rewardPoints, setRewardPoints] = useState<Array<{ x: number; y: number }>>([]);
+  const [artifacts, setArtifacts] = useState<Array<{ id?: string; time?: number; type?: string; description?: string; value?: string; impact?: string; confidence?: number | string; source?: string; step?: number }>>([]);
 
   const investigateMutation = useMutation<any, Error, string>({
     mutationFn: async (prompt: string) => {
@@ -274,6 +275,10 @@ export default function App() {
                 return newCum;
               });
             }
+            // artifact events emitted by backend
+            if (ev.type === 'artifact' && ev.artifact) {
+              setArtifacts(prev => [...prev, ev.artifact]);
+            }
 
             const entry: LogEntry = {
               id: `evt-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
@@ -287,6 +292,26 @@ export default function App() {
 
             if (ev.type === 'final_report') {
               setLogs(prev => [...prev, { id: `report-${Date.now()}`, type: 'system', content: 'Final report received', timestamp: Date.now() }]);
+              // merge findings into artifacts table if present
+              if (ev.report && Array.isArray(ev.report.findings)) {
+                setArtifacts(prev => {
+                  const existingIds = new Set(prev.filter(p => p.id).map(p => p.id));
+                  const additions = ev.report.findings
+                    .filter((f: any) => !f.id || !existingIds.has(f.id))
+                    .map((f: any) => ({
+                      id: f.id,
+                      time: f.time || Date.now(),
+                      type: f.type || 'Finding',
+                      description: f.description || f.value || f.description || JSON.stringify(f),
+                      value: f.value || f.description || JSON.stringify(f),
+                      impact: f.impact || '',
+                      confidence: f.confidence ?? '',
+                      source: f.source ?? '',
+                      step: f.step ?? ''
+                    }));
+                  return [...prev, ...additions];
+                });
+              }
             }
             if (ev.type === 'stream_closed') {
               // stream end signal
@@ -494,44 +519,38 @@ export default function App() {
                 <thead className="bg-slate-900/80 text-[10px] text-slate-500 uppercase sticky top-0">
                   <tr>
                     <th className="px-6 py-2 font-medium">Time</th>
+                    <th className="px-6 py-2 font-medium">ID</th>
                     <th className="px-6 py-2 font-medium">Type</th>
                     <th className="px-6 py-2 font-medium">Value</th>
                     <th className="px-6 py-2 font-medium">Impact</th>
+                    <th className="px-6 py-2 font-medium">Confidence</th>
+                    <th className="px-6 py-2 font-medium">Source</th>
+                    <th className="px-6 py-2 font-medium">Step</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs font-mono divide-y divide-slate-800">
-                  {simStep >= 4 && (
-                    <tr className="hover:bg-slate-800/50 animate-fadeIn">
-                      <td className="px-6 py-3 text-slate-400">02:14:00</td>
-                      <td className="px-6 py-3 text-blue-300">Network</td>
-                      <td className="px-6 py-3 text-slate-300">SSH / 45.13.12.99</td>
-                      <td className="px-6 py-3 text-amber-400">Initial Access</td>
-                    </tr>
-                  )}
-                  {simStep >= 9 && (
-                    <tr className="hover:bg-slate-800/50 animate-fadeIn">
-                      <td className="px-6 py-3 text-slate-400">02:22:10</td>
-                      <td className="px-6 py-3 text-blue-300">Flow Log</td>
-                      <td className="px-6 py-3 text-slate-300">GW-01 -&gt; DB-PROD (2.5GB)</td>
-                      <td className="px-6 py-3 text-red-400">Exfiltration</td>
-                    </tr>
-                  )}
-                  {simStep >= 13 && (
-                    <tr className="hover:bg-slate-800/50 animate-fadeIn">
-                      <td className="px-6 py-3 text-slate-400">02:22:15</td>
-                      <td className="px-6 py-3 text-blue-300">Auth Log</td>
-                      <td className="px-6 py-3 text-slate-300">User: svc_backup</td>
-                      <td className="px-6 py-3 text-red-400">Privilege Escalation</td>
-                    </tr>
-                  )}
+                  {artifacts.length > 0 ? (
+                    artifacts.map((a, idx) => (
+                      <tr key={a.id ?? idx} className="hover:bg-slate-800/50 animate-fadeIn">
+                        <td className="px-6 py-3 text-slate-400">{a.time ? new Date(a.time).toLocaleTimeString() : '-'}</td>
+                        <td className="px-6 py-3 text-slate-300 font-mono">{a.id ?? '-'}</td>
+                        <td className="px-6 py-3 text-blue-300">{a.type ?? 'Artifact'}</td>
+                        <td className="px-6 py-3 text-slate-300">{a.description ?? a.value ?? ''}</td>
+                        <td className="px-6 py-3 text-amber-400">{a.impact ?? ''}</td>
+                        <td className="px-6 py-3 text-slate-300">{a.confidence ?? ''}</td>
+                        <td className="px-6 py-3 text-slate-300">{a.source ?? ''}</td>
+                        <td className="px-6 py-3 text-slate-300">{a.step ?? ''}</td>
+                      </tr>
+                    ))
+                  ) : null}
                 </tbody>
               </table>
-              {simStep < 4 && (
-                 <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-2">
-                   <SearchIcon size={24} className="opacity-20" />
-                   <span className="text-xs">Waiting for agent findings...</span>
-                 </div>
-              )}
+                {artifacts.length === 0 && (
+                   <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-2">
+                     <SearchIcon size={24} className="opacity-20" />
+                     <span className="text-xs">Waiting for agent findings...</span>
+                   </div>
+                )}
             </div>
           </div>
 
