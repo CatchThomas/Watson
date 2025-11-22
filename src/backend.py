@@ -185,12 +185,17 @@ async def _run_investigation_task(investigation_id: str, prompt: str, max_steps:
         # include any dynamic findings discovered during run (artifacts)
         final_report["findings"] = findings if findings else final_report.get("findings", [])
         # include the sequence of emitted events so the UI can replay them
-        final_report["events"] = event_log
+        # use a shallow copy to avoid circular references when we later emit the final_report event
+        final_report["events"] = list(event_log)
         INVESTIGATIONS[investigation_id]["report"] = final_report
         INVESTIGATIONS[investigation_id]["status"] = "completed"
+
+        # Emit final system and report events (they will not be included in final_report['events'] to avoid circular refs)
         ev1 = {"type": "system", "content": "Final report ready", "report_summary": final_report["summary"], "timestamp": int(asyncio.get_event_loop().time() * 1000)}
         await q.put(ev1)
+        # also append to the running event_log for external consumers if desired (kept separate from final_report.events)
         event_log.append(ev1)
+
         ev2 = {"type": "final_report", "report": final_report, "timestamp": int(asyncio.get_event_loop().time() * 1000)}
         await q.put(ev2)
         event_log.append(ev2)
