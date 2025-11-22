@@ -1,0 +1,6 @@
+axolotl/
+models/
+data/
+wandb/
+cache/
+.ipynb_checkpoints/
