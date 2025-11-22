@@ -17,12 +17,22 @@ class AgentLLM:
         Args:
             max_tool_calls: Maximum number of tool calls allowed in a single episode
         """
-        self.client = OpenAI(
-            api_key=Config.OPENAI_API_KEY,
-            openpipe={
+        # Use OpenRouter (OpenAI-compatible) with optional OpenPipe logging
+        openpipe_config = {}
+        if Config.OPENPIPE_API_KEY:
+            openpipe_config = {
                 "api_key": Config.OPENPIPE_API_KEY,
                 "base_url": Config.OPENPIPE_BASE_URL,
             }
+        
+        self.client = OpenAI(
+            api_key=Config.OPENROUTER_API_KEY,
+            base_url=Config.OPENROUTER_BASE_URL,
+            default_headers={
+                "HTTP-Referer": "https://github.com/yourusername/watson",  # Optional
+                "X-Title": "Watson RL Agent",  # Optional
+            },
+            openpipe=openpipe_config if openpipe_config else None
         )
         self.max_tool_calls = max_tool_calls
         self.tool_calls_made = 0
@@ -124,8 +134,8 @@ Think step by step and be thorough in your investigation.
                         "component": Config.AGENT_TAG,
                         "episode": f"episode_{self.tool_calls_made}",
                     },
-                    "log_request": True,
-                },
+                    "log_request": bool(Config.OPENPIPE_API_KEY),  # Only log if API key is set
+                } if Config.OPENPIPE_API_KEY else None,
                 temperature=0.7,
             )
             
@@ -195,8 +205,8 @@ Think step by step and be thorough in your investigation.
                         "component": Config.AGENT_TAG,
                         "episode": "final_summary",
                     },
-                    "log_request": True,
-                },
+                    "log_request": bool(Config.OPENPIPE_API_KEY),  # Only log if API key is set
+                } if Config.OPENPIPE_API_KEY else None,
                 temperature=0.7,
             )
             

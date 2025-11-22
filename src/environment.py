@@ -19,12 +19,22 @@ class EnvironmentLLM:
             scenario: The attack scenario that this environment knows about
         """
         self.scenario = scenario
-        self.client = OpenAI(
-            api_key=Config.OPENAI_API_KEY,
-            openpipe={
+        # Use OpenRouter (OpenAI-compatible) with optional OpenPipe logging
+        openpipe_config = {}
+        if Config.OPENPIPE_API_KEY:
+            openpipe_config = {
                 "api_key": Config.OPENPIPE_API_KEY,
                 "base_url": Config.OPENPIPE_BASE_URL,
             }
+        
+        self.client = OpenAI(
+            api_key=Config.OPENROUTER_API_KEY,
+            base_url=Config.OPENROUTER_BASE_URL,
+            default_headers={
+                "HTTP-Referer": "https://github.com/yourusername/watson",
+                "X-Title": "Watson Environment",
+            },
+            openpipe=openpipe_config if openpipe_config else None
         )
         self.conversation_history: List[Dict[str, str]] = []
         
@@ -90,8 +100,8 @@ Remember: You know the attack scenario details, but reveal them gradually throug
                     "scenario_id": self.scenario.id,
                     "scenario_type": self.scenario.attack_type,
                 },
-                "log_request": True,
-            },
+                "log_request": bool(Config.OPENPIPE_API_KEY),  # Only log if API key is set
+            } if Config.OPENPIPE_API_KEY else None,
             temperature=0.3,  # Lower temperature for more consistent responses
         )
         

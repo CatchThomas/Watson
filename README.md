@@ -23,8 +23,9 @@ This project trains a Large Language Model (LLM) to use **100s of tool calls** t
 ### Prerequisites
 
 - Python 3.8+
-- OpenAI API key
-- OpenPipe account and API key (get from https://app.openpipe.ai/settings)
+- OpenRouter API key (get from https://openrouter.ai/keys)
+- WandB API key (optional, for experiment tracking - get from https://wandb.ai/settings)
+- OpenPipe API key (optional, only needed for cloud logging/fine-tuning - get from https://app.openpipe.ai/settings)
 
 ### Installation
 
@@ -47,17 +48,24 @@ This project trains a Large Language Model (LLM) to use **100s of tool calls** t
    
    Create a `.env` file in the project root:
    ```bash
-   # OpenAI API Key (for calling GPT models)
-   OPENAI_API_KEY=sk-...
+   # OpenRouter API Key (required - get from https://openrouter.ai/keys)
+   OPENROUTER_API_KEY=sk-or-v1-...
    
-   # OpenPipe API Key (get from https://app.openpipe.ai/settings)
-   OPENPIPE_API_KEY=opk-...
+   # WandB API Key (optional - for experiment tracking)
+   WANDB_API_KEY=your-wandb-key
+   WANDB_PROJECT=watson  # Optional: WandB project name
    
-   # Optional: Model configurations (defaults shown)
-   AGENT_MODEL=gpt-4
-   ENVIRONMENT_MODEL=gpt-4
-   REWARD_MODEL=gpt-4
+   # OpenPipe API Key (optional - only needed for cloud logging/fine-tuning)
+   # OPENPIPE_API_KEY=opk-...
+   
+   # Optional: Model configurations (OpenRouter model names)
+   AGENT_MODEL=openai/gpt-4
+   ENVIRONMENT_MODEL=openai/gpt-4
+   REWARD_MODEL=openai/gpt-4
    ```
+   
+   **Note**: OpenRouter is OpenAI-compatible, so you can use any model available on OpenRouter. 
+   See https://openrouter.ai/models for available models.
 
 ## Usage
 

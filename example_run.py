@@ -17,8 +17,10 @@ def main():
     except ValueError as e:
         print(f"Configuration error: {e}")
         print("\nPlease create a .env file with:")
-        print("  OPENAI_API_KEY=sk-...")
-        print("  OPENPIPE_API_KEY=opk-...")
+        print("  OPENROUTER_API_KEY=sk-or-v1-...")
+        print("\nOptional:")
+        print("  WANDB_API_KEY=your-wandb-key")
+        print("  OPENPIPE_API_KEY=opk-...  # Only needed for cloud logging")
         return
     
     # Select a scenario

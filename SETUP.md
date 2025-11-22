@@ -19,11 +19,21 @@
    
    Create a `.env` file:
    ```bash
-   OPENAI_API_KEY=sk-...
-   OPENPIPE_API_KEY=opk-...
+   # Required
+   OPENROUTER_API_KEY=sk-or-v1-...
+   
+   # Optional - for experiment tracking
+   WANDB_API_KEY=your-wandb-key
+   WANDB_PROJECT=watson
+   
+   # Optional - only needed for cloud logging/fine-tuning
+   # OPENPIPE_API_KEY=opk-...
    ```
    
-   Get your OpenPipe API key from: https://app.openpipe.ai/settings
+   Get your API keys from:
+   - OpenRouter: https://openrouter.ai/keys
+   - WandB: https://wandb.ai/settings
+   - OpenPipe: https://app.openpipe.ai/settings (optional, enterprise feature)
 
 3. **Test the setup**:
    ```bash
@@ -90,15 +100,20 @@ Once setup is complete, you can:
 
 ## Troubleshooting
 
-### "Configuration error: OPENAI_API_KEY is required"
+### "Configuration error: OPENROUTER_API_KEY is required"
 
 Make sure your `.env` file exists and contains the required keys. The file should be in the project root directory.
 
-### "OpenPipe API error"
+### OpenRouter API errors
 
-- Verify your OpenPipe API key is correct
-- Check that you're using the correct base URL (default: https://app.openpipe.ai/api/v1)
-- Ensure your OpenPipe account is active
+- Verify your OpenRouter API key is correct
+- Check that you're using a valid model name (e.g., `openai/gpt-4`, `anthropic/claude-3-opus`)
+- See https://openrouter.ai/models for available models
+
+### OpenPipe (optional)
+
+OpenPipe API key is optional and only needed if you want to use cloud logging/fine-tuning features. 
+The SDK will work without it for local development.
 
 ### Import errors
 

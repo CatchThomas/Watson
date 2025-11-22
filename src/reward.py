@@ -13,12 +13,22 @@ class RewardLLM:
     
     def __init__(self):
         """Initialize the reward calculation LLM."""
-        self.client = OpenAI(
-            api_key=Config.OPENAI_API_KEY,
-            openpipe={
+        # Use OpenRouter (OpenAI-compatible) with optional OpenPipe logging
+        openpipe_config = {}
+        if Config.OPENPIPE_API_KEY:
+            openpipe_config = {
                 "api_key": Config.OPENPIPE_API_KEY,
                 "base_url": Config.OPENPIPE_BASE_URL,
             }
+        
+        self.client = OpenAI(
+            api_key=Config.OPENROUTER_API_KEY,
+            base_url=Config.OPENROUTER_BASE_URL,
+            default_headers={
+                "HTTP-Referer": "https://github.com/yourusername/watson",
+                "X-Title": "Watson Reward",
+            },
+            openpipe=openpipe_config if openpipe_config else None
         )
     
     def calculate_reward(
@@ -89,8 +99,8 @@ Be strict but fair. Reward good detective work and penalize missed attacks or in
                     "component": Config.REWARD_TAG,
                     "scenario_id": scenario.id,
                 },
-                "log_request": True,
-            },
+                "log_request": bool(Config.OPENPIPE_API_KEY),  # Only log if API key is set
+            } if Config.OPENPIPE_API_KEY else None,
             temperature=0.3,
             response_format={"type": "json_object"}
         )
